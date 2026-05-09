@@ -51,7 +51,10 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.compose.runtime)
             implementation(libs.compose.material3)
-            implementation(libs.jetbrains.compose.components.components)
+            implementation(libs.compose.components.components)
+            implementation(libs.jetbrains.lifecycle.viewmodelNavigation3)
+            implementation(libs.jetbrains.navigation3.ui)
+
             implementation(libs.de.jensklingenberg.ktorfit.ktorfit.lib)
             implementation(libs.de.jensklingenberg.ktorfit.ktorfit.converters.response)
             implementation(libs.org.jetbrains.kotlinx.serialization.json)

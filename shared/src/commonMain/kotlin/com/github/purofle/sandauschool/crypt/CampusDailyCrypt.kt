@@ -5,9 +5,7 @@ import com.github.purofle.sandauschool.data.SALT
 import com.github.purofle.sandauschool.data.ServiceSecret
 import com.github.purofle.sandauschool.network.CpDailyNetworkRequest.ktorfit
 import com.github.purofle.sandauschool.network.api.createCampusDailyAPI
-import com.github.purofle.sandauschool.res.Res
 import com.github.purofle.sandauschool.utils.StringUtils.toBase64
-import io.ktor.util.decodeBase64String
 import io.ktor.utils.io.core.toByteArray
 import kotlin.io.encoding.Base64
 import kotlin.uuid.ExperimentalUuidApi
@@ -15,7 +13,10 @@ import kotlin.uuid.Uuid
 
 object CampusDailyCrypt {
     @OptIn(ExperimentalUuidApi::class)
-    suspend fun getDynamicKeyFromRemote(publicKey: ByteArray, privateKey: ByteArray): ServiceSecret {
+    suspend fun getDynamicKeyFromRemote(
+        publicKey: ByteArray,
+        privateKey: ByteArray
+    ): ServiceSecret {
         val api = ktorfit.createCampusDailyAPI()
         val randomUUID = Uuid.random()
 
@@ -41,7 +42,25 @@ object CampusDailyCrypt {
         )
     }
 
-    fun getCampushoySecret() {
+    /**
+     * Obfuscates the provided secret by interleaving its characters with a predefined password.
+     * The transformation separates characters at **even** indices from those at **odd** indices and concatenates them.
+     *
+     * @param secret The input secret string to be processed.
+     * @return The transformed secret string.
+     */
+    fun getCampushoySecret(secret: String): String {
+        val inputString = LOCAL_DIS_PASSWORD + secret
+        val result = StringBuilder()
 
+        for (i in 0..1) {
+            inputString.forEachIndexed { index, ch ->
+                if (index % 2 == i) {
+                    result.append(ch)
+                }
+            }
+        }
+
+        return result.toString()
     }
 }

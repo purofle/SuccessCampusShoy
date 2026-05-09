@@ -6,11 +6,11 @@ import com.github.purofle.sandauschool.network.SandauRequest.api
 import com.github.purofle.sandauschool.utils.StringUtils.toBase64
 import io.ktor.utils.io.core.toByteArray
 
-interface LoginService {
+object LoginService {
     data class AuthInfo(val salt: String, val execution: String)
 
     private suspend fun getAuthServerHtml(): String {
-        val rawHtml = api.getLoginPage().message
+        val rawHtml = api.getLoginPage().body() ?: throw Exception("failed to get auth server html")
         return "var o='(.*?)'"
             .toRegex()
             .find(rawHtml)?.groupValues[1] ?: throw Exception("No o found")
@@ -47,7 +47,7 @@ interface LoginService {
         return AuthInfo(salt, execution)
     }
 
-    suspend fun login(username: String, password: String) {
+    suspend fun login(username: String, password: String, captcha: String = "") {
         val authInfo = getAuthInfo()
         val encryptedPassword = aesEncrypt(
             data = (randomString(64) + password).toByteArray(),
@@ -59,6 +59,7 @@ interface LoginService {
             username = username,
             password = encryptedPassword.toBase64(),
             execution = authInfo.execution,
+            captcha = captcha,
         )
     }
 }

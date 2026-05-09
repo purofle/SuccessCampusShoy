@@ -8,6 +8,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRedirect
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
@@ -30,6 +31,7 @@ object SandauRequest {
             // 为什么会有学校 2026 年了还在用 http
             allowHttpsDowngrade = true
         }
+
         install(Logging) {
             logger = object : Logger {
                 // 朴实无华的 logger 实现
@@ -40,6 +42,8 @@ object SandauRequest {
             }
             level = LogLevel.ALL
         }
+
+        install(HttpCookies)
     }
 
     val authServerKtorfit = Ktorfit.Builder()

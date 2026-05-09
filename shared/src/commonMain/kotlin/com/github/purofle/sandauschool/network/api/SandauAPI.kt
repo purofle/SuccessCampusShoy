@@ -1,5 +1,6 @@
 package com.github.purofle.sandauschool.network.api
 
+import com.github.purofle.sandauschool.data.CheckNeedCaptchaResponse
 import de.jensklingenberg.ktorfit.Response
 import de.jensklingenberg.ktorfit.http.Field
 import de.jensklingenberg.ktorfit.http.FormUrlEncoded
@@ -14,7 +15,7 @@ interface SandauAPI {
     ): Response<String>
 
     @FormUrlEncoded
-    @POST("/authserver/login")
+    @POST("authserver/login")
     suspend fun login(
         @Field("username") username: String,
         @Field("password") password: String,
@@ -26,4 +27,9 @@ interface SandauAPI {
         @Field("lt") lt: String = "",
         @Query("service") service: String = "http%3A%2F%2Fauthserver.sandau.edu.cn%2Fauthserver%2Fmobile%2Fcallback%3FappId%3D918460306565562368",
     ): Response<String>
+
+    @GET("authserver/checkNeedCaptcha.htl")
+    suspend fun checkNeedCaptcha(
+        @Query("username") username: String,
+    ): CheckNeedCaptchaResponse
 }

@@ -53,10 +53,13 @@ kotlin {
             implementation(libs.compose.material3)
             implementation(libs.jetbrains.compose.components.components)
             implementation(libs.de.jensklingenberg.ktorfit.ktorfit.lib)
+            implementation(libs.de.jensklingenberg.ktorfit.ktorfit.converters.response)
             implementation(libs.org.jetbrains.kotlinx.serialization.json)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.cio)
+            implementation(libs.ktor.client.logging)
         }
 
         commonTest.dependencies {

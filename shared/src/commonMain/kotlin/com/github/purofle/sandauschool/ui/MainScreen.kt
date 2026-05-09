@@ -9,24 +9,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import com.github.purofle.sandauschool.crypt.CampusDailyCrypt
-import com.github.purofle.sandauschool.crypt.rsaEncrypt
-import com.github.purofle.sandauschool.crypt.sumMD5
-import com.github.purofle.sandauschool.data.DynamicSecretKeyRequest
-import com.github.purofle.sandauschool.data.SALT
-import com.github.purofle.sandauschool.network.CpDailyNetworkRequest.ktorfit
-import com.github.purofle.sandauschool.network.api.createCampusDailyAPI
+import com.github.purofle.sandauschool.network.SandauRequest
 import com.github.purofle.sandauschool.res.Res
 import com.github.purofle.sandauschool.res.app_name
-import com.github.purofle.sandauschool.utils.StringUtils.toBase64
-import io.ktor.utils.io.core.toByteArray
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 @Composable
@@ -51,6 +42,9 @@ fun MainScreen() {
                         )
 
                         println(dynamicKey)
+
+                        val loginPage = SandauRequest.api.getLoginPage()
+                        println(loginPage)
                     }
                 }) {
                     Text("登录")

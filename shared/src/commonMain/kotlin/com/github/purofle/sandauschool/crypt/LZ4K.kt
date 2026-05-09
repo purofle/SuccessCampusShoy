@@ -1,4 +1,4 @@
-package com.github.purofle.sandauschool.crypto
+package com.github.purofle.sandauschool.crypt
 
 
 /**
@@ -108,7 +108,6 @@ object LZ4K {
 
 
     }
-
 
     fun decompressFromBase64(input: String) = when {
         input.isBlank() -> null

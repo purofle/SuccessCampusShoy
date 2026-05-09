@@ -1,11 +1,10 @@
 package com.github.purofle.sandauschool.crypt
 
-import java.security.KeyFactory
 import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.cert.CertificateFactory
-import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
+import javax.crypto.Cipher.ENCRYPT_MODE
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
@@ -14,7 +13,7 @@ actual fun desEncrypt(data: ByteArray, key: ByteArray, iv: ByteArray): ByteArray
     val iv = IvParameterSpec(iv)
 
     val cipher = Cipher.getInstance("DES/CBC/PKCS5Padding")
-    cipher.init(Cipher.ENCRYPT_MODE, key, iv)
+    cipher.init(ENCRYPT_MODE, key, iv)
 
     return cipher.doFinal(data)
 }
@@ -31,7 +30,7 @@ actual fun rsaEncrypt(data: ByteArray, publicKeyBytes: ByteArray): ByteArray {
     val cert = CertificateFactory.getInstance("X.509")
         .generateCertificate(publicKeyBytes.inputStream())
 
-    cipher.init(Cipher.ENCRYPT_MODE, cert.publicKey)
+    cipher.init(ENCRYPT_MODE, cert.publicKey)
 
     return cipher.doFinal(data)
 }
@@ -52,4 +51,17 @@ actual fun rsaDecrypt(data: ByteArray, privateKeyBytes: ByteArray): ByteArray {
     cipher.init(Cipher.DECRYPT_MODE, privateKey)
 
     return cipher.doFinal(data)
+}
+
+actual fun aesEncrypt(data: ByteArray, keyBytes: ByteArray, iv: ByteArray): ByteArray {
+    val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+    cipher.init(
+        ENCRYPT_MODE,
+        SecretKeySpec(keyBytes, "AES"),
+        IvParameterSpec(iv)
+    )
+
+    val encrypted = cipher.doFinal(data)
+
+    return encrypted
 }

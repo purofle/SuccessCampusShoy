@@ -1,6 +1,5 @@
 package com.github.purofle.sandauschool.network
 
-import com.github.purofle.sandauschool.crypt.LZ4K
 import com.github.purofle.sandauschool.network.api.SandauAPI
 import com.github.purofle.sandauschool.network.api.createSandauAPI
 import de.jensklingenberg.ktorfit.Ktorfit
@@ -50,27 +49,4 @@ object SandauRequest {
         .build()
 
     val api: SandauAPI = authServerKtorfit.createSandauAPI()
-
-    private suspend fun getAuthServerHtml(): String {
-        val rawHtml = api.getLoginPage().message
-        return "var o='(.*?)'"
-            .toRegex()
-            .find(rawHtml)?.groupValues[1] ?: throw Exception("No o found")
-    }
-
-    private fun decompressHtml(compressedHtml: String): String {
-        return LZ4K.decompressFromBase64(compressedHtml) ?: throw Exception("failed to decompress")
-    }
-
-    private fun getPwdEncryptSalt(html: String): String {
-        return "id=\"pwdEncryptSalt\"\\s+value=\"([^\"]*)\""
-            .toRegex()
-            .find(html)?.groupValues[1] ?: throw Exception("failed to get pwdEncryptSalt")
-    }
-
-    private fun getExecution(html: String): String {
-        return "name=\"execution\"\\s+value=\"([^\"]*)\""
-            .toRegex()
-            .find(html)?.groupValues[1] ?: throw Exception("no execution found")
-    }
 }

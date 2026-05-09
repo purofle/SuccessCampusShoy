@@ -18,12 +18,12 @@ interface SandauAPI {
     suspend fun login(
         @Field("username") username: String,
         @Field("password") password: String,
+        @Field("captcha") captcha: String = "",
         @Field("_eventId") eventId: String = "submit",
         @Field("cllt") cllt: String = "userNameLogin",
-        @Field("dllt") dllt: String = "generalLogin",
+        @Field("dllt") dllt: String = "mobileLogin",
         @Field("execution") execution: String,
-        @Field("captcha") captcha: String = "",
         @Field("lt") lt: String = "",
-        @Query("service") service: String = "https://newehall.sandau.edu.cn/ywtb-portal/official/index.html",
+        @Query("service") service: String = "http%3A%2F%2Fauthserver.sandau.edu.cn%2Fauthserver%2Fmobile%2Fcallback%3FappId%3D918460306565562368",
     ): Response<String>
 }

@@ -4,7 +4,6 @@ import com.github.purofle.sandauschool.crypt.desEncrypt
 import com.github.purofle.sandauschool.crypt.rsaEncrypt
 import com.github.purofle.sandauschool.crypt.sumMD5
 import com.github.purofle.sandauschool.res.Res
-import com.github.purofle.sandauschool.network.CpDailyNetworkRequest
 import com.github.purofle.sandauschool.utils.StringUtils.toBase64
 import io.ktor.utils.io.core.toByteArray
 import kotlinx.coroutines.runBlocking
@@ -40,10 +39,5 @@ class DynamicSecretKeyTest {
         val md5 = sumMD5(data).toHexString()
 
         assertEquals("65a8e27d8879283831b664bd8b7f0ad4", md5)
-    }
-
-    @Test
-    fun `test getDynamicSecretKey`() = runBlocking {
-        CpDailyNetworkRequest.getDynamicSecretKey()
     }
 }

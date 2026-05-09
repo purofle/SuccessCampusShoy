@@ -6,6 +6,8 @@ expect fun rsaEncrypt(data: ByteArray, publicKeyBytes: ByteArray): ByteArray
 
 expect fun rsaDecrypt(data: ByteArray, privateKeyBytes: ByteArray): ByteArray
 
+expect fun aesEncrypt(data: ByteArray, keyBytes: ByteArray, iv: ByteArray): ByteArray
+
 expect fun sumMD5(data: ByteArray): ByteArray
 
 const val RSA_PASSWORD = "Rs&#81"

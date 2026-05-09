@@ -126,3 +126,7 @@ actual fun sumMD5(data: ByteArray): ByteArray {
 actual fun rsaDecrypt(data: ByteArray, privateKeyBytes: ByteArray): ByteArray {
     TODO("Not yet implemented")
 }
+
+actual fun aesEncrypt(data: ByteArray, keyBytes: ByteArray, iv: ByteArray): ByteArray {
+    TODO("Not yet implemented")
+}

@@ -1,6 +1,6 @@
 @file:OptIn(BetaInteropApi::class, ExperimentalForeignApi::class)
 
-package com.github.sandauschool.crypt
+package com.github.purofle.sandauschool.crypt
 
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -89,7 +89,7 @@ fun CFDataRef.toByteArray(): ByteArray {
     }.toByteArray()
 }
 
-actual fun rsaEncrypt(data: ByteArray, publicKey: ByteArray): ByteArray = memScoped {
+actual fun rsaEncrypt(data: ByteArray, publicKeyBytes: ByteArray): ByteArray = memScoped {
     val publicKeyAttr = CFDictionaryCreateMutable(null, 2, null, null)
     CFDictionaryAddValue(publicKeyAttr, kSecAttrKeyType, kSecAttrKeyTypeRSA)
     CFDictionaryAddValue(publicKeyAttr, kSecAttrKeyClass, kSecAttrKeyClassPublic)
@@ -98,7 +98,7 @@ actual fun rsaEncrypt(data: ByteArray, publicKey: ByteArray): ByteArray = memSco
 
     val secKey = SecCertificateCreateWithData(
         allocator = null,
-        data = publicKey.toCFData(),
+        data = publicKeyBytes.toCFData(),
         ) ?: error("SecKeyCreateWithData failed")
 
     val encrypted = SecKeyCreateEncryptedData(
@@ -121,4 +121,8 @@ actual fun sumMD5(data: ByteArray): ByteArray {
     )
 
     return digest.asByteArray()
+}
+
+actual fun rsaDecrypt(data: ByteArray, privateKeyBytes: ByteArray): ByteArray {
+    TODO("Not yet implemented")
 }

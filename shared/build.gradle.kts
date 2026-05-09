@@ -18,8 +18,8 @@ android {
     namespace = "com.github.purofle.sandauschool"
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
 
-    testOptions {
-        unitTests.isReturnDefaultValues = true
+    defaultConfig {
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 }
 
@@ -42,16 +42,25 @@ kotlin {
                 optIn("org.jetbrains.compose.resources.ExperimentalResourceApi")
             }
         }
+
+        androidMain.dependencies {
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.androidx.activity.compose)
+        }
+
         commonMain.dependencies {
-            implementation(compose.runtime)
+            implementation(libs.compose.runtime)
+            implementation(libs.compose.material3)
             implementation(libs.jetbrains.compose.components.components)
             implementation(libs.de.jensklingenberg.ktorfit.ktorfit.lib)
             implementation(libs.org.jetbrains.kotlinx.serialization.json)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.core)
         }
 
         commonTest.dependencies {
             implementation(kotlin("test"))
-            implementation(kotlin("test-annotations-common"))
         }
     }
 }

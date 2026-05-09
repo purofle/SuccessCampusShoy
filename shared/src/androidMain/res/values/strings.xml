@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">Sandau School</string>
+    <string name="login">Login</string>
+    <string name="input_student_id">Please enter Student ID</string>
+    <string name="input_password">Please enter password</string>
+    <string name="good_morning">Good morning</string>
+    <string name="good_afternoon">Good afternoon</string>
+    <string name="good_evening">Good evening</string>
+    <string name="date_pattern">MMM d (EEE)</string>
+    <string name="purofle">Purofle</string>
+    
+    <!-- Main Screen -->
+    <string name="today_is_week">Today is %1$s, Week %2$d</string>
+    <string name="no_courses_today">No courses today~</string>
+    <string name="classroom_suffix">Classroom</string>
+    
+    <!-- TimeTable Screen -->
+    <string name="monday">Mon</string>
+    <string name="tuesday">Tue</string>
+    <string name="wednesday">Wed</string>
+    <string name="thursday">Thu</string>
+    <string name="friday">Fri</string>
+    
+    <!-- MainActivity Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_timetable">Timetable</string>
+    <string name="nav_debug">Debug</string>
+    
+    <!-- Debug Screen -->
+    <string name="clean_cookie">Clean cookie</string>
+    <string name="refresh_course_table">Refresh course table</string>
+    <string name="Refresh_week">Refresh week</string>
+</resources>

@@ -1,6 +1,6 @@
 @file:OptIn(BetaInteropApi::class, ExperimentalForeignApi::class)
 
-package com.github.purofle.sandauschool.crypt
+package com.github.purofle.sandauschool.crypto
 
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi

@@ -1,7 +1,7 @@
 package com.github.purofle.sandauschool.network
 
-import com.github.purofle.sandauschool.crypt.LZ4K
-import com.github.purofle.sandauschool.crypt.aesEncrypt
+import com.github.purofle.sandauschool.crypto.LZ4K
+import com.github.purofle.sandauschool.crypto.aesEncrypt
 import com.github.purofle.sandauschool.network.SandauRequest.api
 import com.github.purofle.sandauschool.utils.StringUtils.toBase64
 import io.ktor.utils.io.core.toByteArray

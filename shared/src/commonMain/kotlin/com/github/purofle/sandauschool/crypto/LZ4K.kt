@@ -1,4 +1,4 @@
-package com.github.purofle.sandauschool.crypt
+package com.github.purofle.sandauschool.crypto
 
 
 /**

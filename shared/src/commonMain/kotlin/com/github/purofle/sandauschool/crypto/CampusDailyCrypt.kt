@@ -1,4 +1,4 @@
-package com.github.purofle.sandauschool.crypt
+package com.github.purofle.sandauschool.crypto
 
 import com.github.purofle.sandauschool.data.DynamicSecretKeyRequest
 import com.github.purofle.sandauschool.data.SALT

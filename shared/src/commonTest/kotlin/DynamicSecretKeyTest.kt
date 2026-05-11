@@ -1,8 +1,8 @@
 package com.github.sandauschool.crypt
 
-import com.github.purofle.sandauschool.crypt.desEncrypt
-import com.github.purofle.sandauschool.crypt.rsaEncrypt
-import com.github.purofle.sandauschool.crypt.sumMD5
+import com.github.purofle.sandauschool.crypto.desEncrypt
+import com.github.purofle.sandauschool.crypto.rsaEncrypt
+import com.github.purofle.sandauschool.crypto.sumMD5
 import com.github.purofle.sandauschool.res.Res
 import com.github.purofle.sandauschool.utils.StringUtils.toBase64
 import io.ktor.utils.io.core.toByteArray

@@ -1,6 +1,6 @@
 package com.github.purofle.sandauschool.network
 
-import com.github.purofle.sandauschool.crypt.desEncrypt
+import com.github.purofle.sandauschool.crypto.desEncrypt
 import com.github.purofle.sandauschool.data.CpdailyInfo
 import com.github.purofle.sandauschool.utils.StringUtils.toBase64
 import de.jensklingenberg.ktorfit.Ktorfit

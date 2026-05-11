@@ -10,7 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.github.purofle.sandauschool.crypt.CampusDailyCrypt
+import com.github.purofle.sandauschool.crypto.CampusDailyCrypt
 import com.github.purofle.sandauschool.network.LoginService
 import com.github.purofle.sandauschool.network.SandauRequest
 import com.github.purofle.sandauschool.res.Res
@@ -47,7 +47,7 @@ fun HomeScreen() {
                     Res.readBytes("files/dis_private_key.p12")
                 )
 
-                // 神人设计 验证码在后段没有校验，所以传入 aaaa
+                // 神人设计 验证码在后端没有校验，所以传入 aaaa
                 val needCaptcha = SandauRequest.api.checkNeedCaptcha(username).isNeed
 
                 LoginService.login(

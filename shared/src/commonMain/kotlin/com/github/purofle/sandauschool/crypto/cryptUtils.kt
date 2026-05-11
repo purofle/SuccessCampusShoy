@@ -1,4 +1,4 @@
-package com.github.purofle.sandauschool.crypt
+package com.github.purofle.sandauschool.crypto
 
 expect fun desEncrypt(data: ByteArray, key: ByteArray, iv: ByteArray): ByteArray
 

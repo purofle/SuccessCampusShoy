@@ -9,11 +9,20 @@ import io.ktor.utils.io.core.toByteArray
 object LoginService {
     data class AuthInfo(val salt: String, val execution: String)
 
-    private suspend fun getAuthServerHtml(): String {
+    /**
+     * @return Pair<Boolean, String> Boolean meaning if this string need decompress
+     */
+    private suspend fun getAuthServerHtml(): Pair<Boolean, String> {
         val rawHtml = api.getLoginPage().body() ?: throw Exception("failed to get auth server html")
-        return "var o='(.*?)'"
+        val result = "var o='(.*?)'"
             .toRegex()
-            .find(rawHtml)?.groupValues[1] ?: throw Exception("No o found")
+            .find(rawHtml)?.groupValues[1]
+
+        return if (result != null) {
+            true to result
+        } else {
+            false to rawHtml
+        }
     }
 
     private fun decompressHtml(compressedHtml: String): String {
@@ -23,7 +32,8 @@ object LoginService {
     private fun getPwdEncryptSalt(html: String): String {
         return "id=\"pwdEncryptSalt\"\\s+value=\"([^\"]*)\""
             .toRegex()
-            .find(html)?.groupValues[1] ?: throw Exception("failed to get pwdEncryptSalt")
+            .find(html)?.groupValues[1]
+            ?: throw Exception("failed to get pwdEncryptSalt: raw html: $html")
     }
 
     private fun getExecution(html: String): String {
@@ -40,14 +50,14 @@ object LoginService {
     }
 
     suspend fun getAuthInfo(): AuthInfo {
-        val compressedHtml = getAuthServerHtml()
-        val html = decompressHtml(compressedHtml)
+        val (needDecompress, rawHtml) = getAuthServerHtml()
+        val html = if (needDecompress) decompressHtml(rawHtml) else rawHtml
         val salt = getPwdEncryptSalt(html)
         val execution = getExecution(html)
         return AuthInfo(salt, execution)
     }
 
-    suspend fun login(username: String, password: String, captcha: String = "") {
+    suspend fun login(username: String, password: String, captcha: String = ""): String {
         val authInfo = getAuthInfo()
         val encryptedPassword = aesEncrypt(
             data = (randomString(64) + password).toByteArray(),
@@ -55,11 +65,19 @@ object LoginService {
             iv = randomString(16).toByteArray(),
         )
 
-        api.login(
+        val response = api.login(
             username = username,
             password = encryptedPassword.toBase64(),
             execution = authInfo.execution,
             captcha = captcha,
         )
+
+        if (response.code == 302 && response.headers.contains("Location")) {
+            val (_, ticket) = response.headers["Location"]!!.split("ticket=")
+
+            return ticket
+        } else {
+            error("Cannot find ticket in 302 url")
+        }
     }
 }

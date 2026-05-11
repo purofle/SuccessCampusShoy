@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.github.purofle.sandauschool.crypto.CampusDailyCrypt
+import com.github.purofle.sandauschool.crypto.CampusDailyCrypt.getCampushoySecret
 import com.github.purofle.sandauschool.network.LoginService
 import com.github.purofle.sandauschool.network.SandauRequest
 import com.github.purofle.sandauschool.res.Res
@@ -25,6 +26,7 @@ fun HomeScreen() {
     val scope = rememberCoroutineScope()
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var loginStatus by remember { mutableStateOf("") }
 
     Column {
 
@@ -40,9 +42,11 @@ fun HomeScreen() {
             label = { Text(stringResource(Res.string.input_password)) }
         )
 
+        Text(loginStatus)
+
         Button({
             scope.launch {
-                CampusDailyCrypt.getDynamicKeyFromRemote(
+                val serviceSecret = CampusDailyCrypt.getDynamicKeyFromRemote(
                     Res.readBytes("files/dis_public_key.der"),
                     Res.readBytes("files/dis_private_key.p12")
                 )
@@ -50,11 +54,14 @@ fun HomeScreen() {
                 // 神人设计 验证码在后端没有校验，所以传入 aaaa
                 val needCaptcha = SandauRequest.api.checkNeedCaptcha(username).isNeed
 
-                LoginService.login(
+                val loginResult = LoginService.login(
                     username,
                     password,
-                    captcha = if (needCaptcha) "aaaa" else ""
+                    captcha = if (needCaptcha) "aaaa" else "",
+                    getCampushoySecret(serviceSecret.cpdailySecret),
                 )
+
+                loginStatus = loginResult.toString()
             }
         }) {
             Text("登录")

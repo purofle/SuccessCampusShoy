@@ -1,9 +1,11 @@
 package com.github.purofle.sandauschool.crypto
 
+import com.github.purofle.sandauschool.network.RSA_PASSWORD
 import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.cert.CertificateFactory
 import javax.crypto.Cipher
+import javax.crypto.Cipher.DECRYPT_MODE
 import javax.crypto.Cipher.ENCRYPT_MODE
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -48,20 +50,24 @@ actual fun rsaDecrypt(data: ByteArray, privateKeyBytes: ByteArray): ByteArray {
         RSA_PASSWORD.toCharArray(),
         )
 
-    cipher.init(Cipher.DECRYPT_MODE, privateKey)
+    cipher.init(DECRYPT_MODE, privateKey)
 
     return cipher.doFinal(data)
 }
 
-actual fun aesEncrypt(data: ByteArray, keyBytes: ByteArray, iv: ByteArray): ByteArray {
+internal fun aes(data: ByteArray, keyBytes: ByteArray, iv: ByteArray, opMode: Int): ByteArray {
     val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
     cipher.init(
-        ENCRYPT_MODE,
+        opMode,
         SecretKeySpec(keyBytes, "AES"),
         IvParameterSpec(iv)
     )
 
-    val encrypted = cipher.doFinal(data)
-
-    return encrypted
+    return cipher.doFinal(data)
 }
+
+actual fun aesEncrypt(data: ByteArray, keyBytes: ByteArray, iv: ByteArray): ByteArray =
+    aes(data, keyBytes, iv, ENCRYPT_MODE)
+
+actual fun aesDecrypt(data: ByteArray, keyBytes: ByteArray, iv: ByteArray): ByteArray =
+    aes(data, keyBytes, iv, DECRYPT_MODE)

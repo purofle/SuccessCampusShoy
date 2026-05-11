@@ -130,3 +130,11 @@ actual fun rsaDecrypt(data: ByteArray, privateKeyBytes: ByteArray): ByteArray {
 actual fun aesEncrypt(data: ByteArray, keyBytes: ByteArray, iv: ByteArray): ByteArray {
     TODO("Not yet implemented")
 }
+
+actual fun aesDecrypt(
+    data: ByteArray,
+    keyBytes: ByteArray,
+    iv: ByteArray
+): ByteArray {
+    TODO("Not yet implemented")
+}

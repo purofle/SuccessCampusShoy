@@ -12,4 +12,5 @@ data class CpdailyInfo(
     val lat: Int = 0,
     val cpdailyVersion: String = "9.9.7",
     val systemVersion: String = "26.3",
+    val userId: String = "",
 )

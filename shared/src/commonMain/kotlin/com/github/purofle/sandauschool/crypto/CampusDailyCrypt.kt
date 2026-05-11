@@ -3,8 +3,8 @@ package com.github.purofle.sandauschool.crypto
 import com.github.purofle.sandauschool.data.DynamicSecretKeyRequest
 import com.github.purofle.sandauschool.data.SALT
 import com.github.purofle.sandauschool.data.ServiceSecret
-import com.github.purofle.sandauschool.network.CpDailyNetworkRequest.ktorfit
-import com.github.purofle.sandauschool.network.api.createCampusDailyAPI
+import com.github.purofle.sandauschool.network.CpDailyNetworkRequest
+import com.github.purofle.sandauschool.network.LOCAL_DIS_PASSWORD
 import com.github.purofle.sandauschool.utils.StringUtils.toBase64
 import io.ktor.utils.io.core.toByteArray
 import kotlin.io.encoding.Base64
@@ -17,7 +17,7 @@ object CampusDailyCrypt {
         publicKey: ByteArray,
         privateKey: ByteArray
     ): ServiceSecret {
-        val api = ktorfit.createCampusDailyAPI()
+        val api = CpDailyNetworkRequest.api
         val randomUUID = Uuid.random()
 
         val privateData = "${randomUUID}|first_v4"

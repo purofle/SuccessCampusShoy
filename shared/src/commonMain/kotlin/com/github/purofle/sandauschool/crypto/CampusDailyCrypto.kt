@@ -42,6 +42,10 @@ object CampusDailyCrypto {
         )
     }
 
+    suspend fun getDynamicKeyFromLocal() {
+
+    }
+
     /**
      * Obfuscates the provided secret by interleaving its characters with a predefined password.
      * The transformation separates characters at **even** indices from those at **odd** indices and concatenates them.

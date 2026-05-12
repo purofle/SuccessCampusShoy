@@ -96,7 +96,7 @@ object LoginService {
         val campusLoginRequest = CpDailyNetworkRequest.api.notCloudLogin(
             NotCloudLoginRequest(
                 aesEncrypt(
-                    CpDailyNetworkRequest.json.encodeToString(LoginData(mobileToken)).toByteArray(),
+                    json.encodeToString(LoginData(mobileToken)).toByteArray(),
                     cpdailySecret.toByteArray(),
                     AES_IV,
                 ).toBase64(),
@@ -110,7 +110,7 @@ object LoginService {
         )
 
         val loginData: CpdailyLogin =
-            CpDailyNetworkRequest.json.decodeFromString(data.decodeToString())
+            json.decodeFromString(data.decodeToString())
 
         if (loginData.deviceStatus == "exception") {
             emit(LoginStatus.NeedMsgVerify(loginData.deviceExceptionMsg, loginData.mobile))
@@ -154,7 +154,7 @@ object LoginService {
 
         val call =
             if (ssoLoginRequest.code == 302 && ssoLoginRequest.headers.contains("Location")) {
-                SandauRequest.myClient.get(ssoLoginRequest.headers["Location"]!!).call
+                myClient.get(ssoLoginRequest.headers["Location"]!!).call
         } else {
                 ssoLoginRequest.raw().call
             }

@@ -55,6 +55,9 @@ kotlin {
             implementation(libs.jetbrains.lifecycle.viewmodelNavigation3)
             implementation(libs.jetbrains.navigation3.ui)
 
+            implementation(libs.androidx.datastore)
+            implementation(libs.androidx.datastore.preferences)
+
             implementation(libs.de.jensklingenberg.ktorfit.ktorfit.lib)
             implementation(libs.de.jensklingenberg.ktorfit.ktorfit.converters.response)
             implementation(libs.org.jetbrains.kotlinx.serialization.json)

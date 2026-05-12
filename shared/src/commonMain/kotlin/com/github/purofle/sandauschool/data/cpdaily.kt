@@ -1,5 +1,6 @@
 package com.github.purofle.sandauschool.data
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -29,6 +30,7 @@ data class CpdailyLogin(
     val personId: String,
     val sessionToken: String,
     val status: String,
+    val tgc: String,
 )
 
 @Serializable
@@ -51,4 +53,16 @@ data class MessageCodeData(
     val countdown: Int,
     val tipMsg: String,
     val status: Int,
+)
+
+@Serializable
+data class AMPSession(
+    val value: String,
+    val name: String = "sessionToken",
+)
+
+@Serializable
+data class AMP(
+    @SerialName("AMP1") val amp1: List<AMPSession>,
+    @SerialName("AMP2") val amp2: List<AMPSession>,
 )

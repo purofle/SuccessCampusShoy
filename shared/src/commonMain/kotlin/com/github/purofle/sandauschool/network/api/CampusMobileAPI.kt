@@ -8,7 +8,7 @@ import com.github.purofle.sandauschool.data.StringDataOnlyResponse
 import de.jensklingenberg.ktorfit.http.Body
 import de.jensklingenberg.ktorfit.http.POST
 
-interface CampusDailyAPI {
+interface CampusMobileAPI {
     @POST("app/auth/dynamic/secret/getSecretKey/v-920")
     suspend fun getDynamicSecretKey(
         @Body data: DynamicSecretKeyRequest,

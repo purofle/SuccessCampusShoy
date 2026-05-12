@@ -13,8 +13,13 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.github.purofle.sandauschool.crypto.CampusDailyCrypt
-import com.github.purofle.sandauschool.crypto.CampusDailyCrypt.getCampushoySecret
+import com.github.purofle.sandauschool.crypto.CampusDailyCrypto
+import com.github.purofle.sandauschool.crypto.CampusDailyCrypto.getCampushoySecret
+import com.github.purofle.sandauschool.data.CAMPUSHOY_SECRET
+import com.github.purofle.sandauschool.data.CAMPUSHOY_SESSION_TOKEN
+import com.github.purofle.sandauschool.data.CAMPUSHOY_TGC
+import com.github.purofle.sandauschool.data.get
+import com.github.purofle.sandauschool.data.set
 import com.github.purofle.sandauschool.network.LoginService
 import com.github.purofle.sandauschool.network.LoginService.LoginStatus
 import com.github.purofle.sandauschool.network.SandauRequest
@@ -27,20 +32,45 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 class HomeScreenViewModel() : ViewModel() {
+
+    init {
+        getOrSetDynamicKey()
+    }
+
     private val _loginStatus = MutableStateFlow<LoginStatus>(LoginStatus.WaitForLogin)
     val loginStatus = _loginStatus.asStateFlow()
+
+    private val _dynamicKey = MutableStateFlow<String?>(null)
+
+    fun getOrSetDynamicKey() {
+        viewModelScope.launch {
+
+            val localSecret = CAMPUSHOY_SECRET.get()
+
+            if (localSecret != null) {
+                _dynamicKey.value = localSecret
+                return@launch
+            }
+
+            val serviceSecret =
+                CampusDailyCrypto.getDynamicKeyFromRemote(
+                    Res.readBytes("files/dis_public_key.der"),
+                    Res.readBytes("files/dis_private_key.p12")
+                )
+
+            val campushoySecret = getCampushoySecret(
+                serviceSecret.cpdailySecret
+            )
+
+            CAMPUSHOY_SECRET.set(campushoySecret)
+        }
+    }
 
     fun login(
         username: String,
         password: String
     ) {
         viewModelScope.launch {
-            val serviceSecret =
-                CampusDailyCrypt.getDynamicKeyFromRemote(
-                    Res.readBytes("files/dis_public_key.der"),
-                    Res.readBytes("files/dis_private_key.p12")
-                )
-
             val needCaptcha =
                 SandauRequest.api
                     .checkNeedCaptcha(username)
@@ -50,26 +80,27 @@ class HomeScreenViewModel() : ViewModel() {
                 username = username,
                 password = password,
                 captcha = if (needCaptcha) "aaaa" else "",
-                cpdailySecret = getCampushoySecret(
-                    serviceSecret.cpdailySecret
-                ),
+                cpdailySecret = _dynamicKey.value!!,
             ).collect {
                 _loginStatus.value = it
+
+                when (it) {
+                    is LoginStatus.LoginSuccess -> {
+                        CAMPUSHOY_SESSION_TOKEN.set(it.cpdailyLogin.sessionToken)
+                        CAMPUSHOY_TGC.set(it.cpdailyLogin.tgc)
+                    }
+
+                    else -> {}
+                }
             }
         }
     }
 
     fun sendSmsVerificationCode(phone: String) {
         viewModelScope.launch {
-            val serviceSecret =
-                CampusDailyCrypt.getDynamicKeyFromRemote(
-                    Res.readBytes("files/dis_public_key.der"),
-                    Res.readBytes("files/dis_private_key.p12")
-                )
-
             LoginService.sendSmsVerificationCode(
                 phone = phone,
-                cpdailySecret = getCampushoySecret(serviceSecret.cpdailySecret)
+                cpdailySecret = _dynamicKey.value!!
             )
         }
     }

@@ -11,7 +11,7 @@ import kotlin.io.encoding.Base64
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-object CampusDailyCrypt {
+object CampusDailyCrypto {
     @OptIn(ExperimentalUuidApi::class)
     suspend fun getDynamicKeyFromRemote(
         publicKey: ByteArray,

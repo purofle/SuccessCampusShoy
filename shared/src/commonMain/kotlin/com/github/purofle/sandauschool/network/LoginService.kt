@@ -4,6 +4,7 @@ import com.github.purofle.sandauschool.crypto.LZ4K
 import com.github.purofle.sandauschool.crypto.aesDecrypt
 import com.github.purofle.sandauschool.crypto.aesEncrypt
 import com.github.purofle.sandauschool.data.CpdailyLogin
+import com.github.purofle.sandauschool.data.CpdailyMessageCode
 import com.github.purofle.sandauschool.data.LoginData
 import com.github.purofle.sandauschool.data.NotCloudLoginRequest
 import com.github.purofle.sandauschool.network.SandauRequest.api
@@ -12,13 +13,23 @@ import io.ktor.client.call.HttpClientCall
 import io.ktor.client.request.get
 import io.ktor.http.decodeURLPart
 import io.ktor.utils.io.core.toByteArray
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlin.io.encoding.Base64
 
 object LoginService {
-    sealed class LoginStatus {
-        data class NeedDecompressHtml(val compressedHtml: String) : LoginStatus()
-        data class GotAuthServerHtml(val html: String) : LoginStatus()
-        data class AlreadyLoggedIn(val mobileToken: String) : LoginStatus()
+    sealed interface LoginStatus {
+        data object WaitForLogin : LoginStatus
+        data class NeedDecompressHtml(val compressedHtml: String) : LoginStatus
+        data class GotAuthServerHtml(val html: String) : LoginStatus
+        data class GotMobileToken(val mobileToken: String) : LoginStatus
+        data class LoginSuccess(val cpdailyLogin: CpdailyLogin) : LoginStatus
+        data class NeedMsgVerify(val msg: String, val phoneNumber: String) : LoginStatus
+        data class Error(val message: String?) : LoginStatus
     }
 
     /**
@@ -30,7 +41,7 @@ object LoginService {
             getLoginPageRequest.body() ?: throw Exception("failed to get auth server html")
 
         getMobileToken(getLoginPageRequest.raw().call)?.let {
-            return LoginStatus.AlreadyLoggedIn(it)
+            return LoginStatus.GotMobileToken(it)
         }
 
         val result = "var o='(.*?)'"
@@ -68,24 +79,26 @@ object LoginService {
             .joinToString("")
     }
 
-    suspend fun login(
+    fun login(
         username: String,
         password: String,
         captcha: String = "",
         cpdailySecret: String
-    ): CpdailyLogin {
+    ): Flow<LoginStatus> = flow {
 
         val mobileToken = when (val status = getAuthServerHtml()) {
-            is LoginStatus.AlreadyLoggedIn -> status.mobileToken
+            is LoginStatus.GotMobileToken -> status.mobileToken
             else -> performSsoLogin(username, password, captcha, status)
         }.decodeURLPart()
+
+        emit(LoginStatus.GotMobileToken(mobileToken))
 
         val campusLoginRequest = CpDailyNetworkRequest.api.notCloudLogin(
             NotCloudLoginRequest(
                 aesEncrypt(
                     CpDailyNetworkRequest.json.encodeToString(LoginData(mobileToken)).toByteArray(),
                     cpdailySecret.toByteArray(),
-                    DES_IV,
+                    AES_IV,
                 ).toBase64(),
             )
         )
@@ -93,10 +106,22 @@ object LoginService {
         val data = aesDecrypt(
             Base64.decode(campusLoginRequest.data),
             cpdailySecret.toByteArray(),
-            DES_IV,
+            AES_IV,
         )
 
-        return CpDailyNetworkRequest.json.decodeFromString(data.decodeToString())
+        val loginData: CpdailyLogin =
+            CpDailyNetworkRequest.json.decodeFromString(data.decodeToString())
+
+        if (loginData.deviceStatus == "exception") {
+            emit(LoginStatus.NeedMsgVerify(loginData.deviceExceptionMsg, loginData.mobile))
+            return@flow
+        }
+
+        emit(LoginStatus.LoginSuccess(loginData))
+    }
+        .flowOn(Dispatchers.IO)
+        .catch {
+            emit(LoginStatus.Error(it.message))
     }
 
     private suspend fun performSsoLogin(
@@ -147,9 +172,21 @@ object LoginService {
             return null
         }
     }
+
+    suspend fun sendSmsVerificationCode(phone: String, cpdailySecret: String) {
+        CpDailyNetworkRequest.api.messageCode(
+            CpdailyMessageCode(
+                aesEncrypt(
+                    phone.toByteArray(),
+                    cpdailySecret.toByteArray(),
+                    AES_IV
+                ).toBase64()
+            )
+        )
+    }
 }
 
 const val RSA_PASSWORD = "Rs&#81"
 const val LOCAL_DIS_PASSWORD = "f9akfyUe"
-val DES_IV =
+val AES_IV =
     byteArrayOf(0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7)

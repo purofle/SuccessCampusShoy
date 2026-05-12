@@ -1,6 +1,8 @@
 package com.github.purofle.sandauschool.network.api
 
+import com.github.purofle.sandauschool.data.CpdailyMessageCode
 import com.github.purofle.sandauschool.data.DynamicSecretKeyRequest
+import com.github.purofle.sandauschool.data.MessageCodeResponse
 import com.github.purofle.sandauschool.data.NotCloudLoginRequest
 import com.github.purofle.sandauschool.data.StringDataOnlyResponse
 import de.jensklingenberg.ktorfit.http.Body
@@ -16,4 +18,9 @@ interface CampusDailyAPI {
     suspend fun notCloudLogin(
         @Body data: NotCloudLoginRequest,
     ): StringDataOnlyResponse
+
+    @POST("v6/auth/deviceChange/mobile/messageCode/v2")
+    suspend fun messageCode(
+        @Body data: CpdailyMessageCode,
+    ): MessageCodeResponse
 }

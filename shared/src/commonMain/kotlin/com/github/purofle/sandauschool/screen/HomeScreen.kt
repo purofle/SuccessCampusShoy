@@ -18,14 +18,18 @@ import com.github.purofle.sandauschool.crypto.CampusDailyCrypto.getCampushoySecr
 import com.github.purofle.sandauschool.data.CAMPUSHOY_SECRET
 import com.github.purofle.sandauschool.data.CAMPUSHOY_SESSION_TOKEN
 import com.github.purofle.sandauschool.data.CAMPUSHOY_TGC
+import com.github.purofle.sandauschool.data.CampushoyLoginRequest
 import com.github.purofle.sandauschool.data.get
 import com.github.purofle.sandauschool.data.set
+import com.github.purofle.sandauschool.network.CpDailyNetworkRequest
 import com.github.purofle.sandauschool.network.LoginService
 import com.github.purofle.sandauschool.network.LoginService.LoginStatus
 import com.github.purofle.sandauschool.network.SandauRequest
 import com.github.purofle.sandauschool.res.Res
 import com.github.purofle.sandauschool.res.input_password
 import com.github.purofle.sandauschool.res.input_student_id
+import io.ktor.client.statement.request
+import io.ktor.http.parseQueryString
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -41,6 +45,9 @@ class HomeScreenViewModel() : ViewModel() {
     val loginStatus = _loginStatus.asStateFlow()
 
     private val _dynamicKey = MutableStateFlow<String?>(null)
+
+    private val _classTable = MutableStateFlow<String>("")
+    val classTable = _classTable.asStateFlow()
 
     fun getOrSetDynamicKey() {
         viewModelScope.launch {
@@ -104,6 +111,35 @@ class HomeScreenViewModel() : ViewModel() {
             )
         }
     }
+
+    fun loginAttendanceSystem() {
+        viewModelScope.launch {
+            val sessionToken = CAMPUSHOY_SESSION_TOKEN.get()
+            val oauth2 = CpDailyNetworkRequest.campusAPI.oauth2Authorize(
+                "clientType: cpdaily_student; sessionToken=${sessionToken}; standAlone=0; tenantId=sandau",
+            )
+            val code = oauth2.raw().request.url
+                .fragment
+                .substringAfter("?")
+                .let(::parseQueryString)["code"]
+
+            if (code.isNullOrBlank()) error("no code in oauth2 response: ${oauth2.body()}")
+
+            val campushoyLoginRequest = SandauRequest.appApi.campushoyLogin(
+                CampushoyLoginRequest(
+                    code = code
+                )
+            )
+
+            val token =
+                if (campushoyLoginRequest.code == 200 && !campushoyLoginRequest.token.isNullOrBlank()) {
+                    campushoyLoginRequest.token
+                } else {
+                    error("login failed: ${campushoyLoginRequest.msg}")
+                }
+            _classTable.value = SandauRequest.appApi.getTodayClassTable(token).body() ?: "暂无"
+        }
+    }
 }
 
 @Composable
@@ -112,6 +148,7 @@ fun HomeScreen(vm: HomeScreenViewModel = viewModel()) {
     var password by remember { mutableStateOf("") }
     var smsVerificationCode by remember { mutableStateOf("") }
     val loginStatus: LoginStatus by vm.loginStatus.collectAsState()
+    val classTable by vm.classTable.collectAsState()
 
     Column {
 
@@ -134,6 +171,7 @@ fun HomeScreen(vm: HomeScreenViewModel = viewModel()) {
         )
 
         Text(loginStatus.toString())
+        Text(classTable)
 
         Button({
             vm.login(username, password)
@@ -148,6 +186,12 @@ fun HomeScreen(vm: HomeScreenViewModel = viewModel()) {
             }
         }) {
             Text("发送短信验证码")
+        }
+
+        Button({
+            vm.loginAttendanceSystem()
+        }) {
+            Text("考勤系统登录")
         }
     }
 }

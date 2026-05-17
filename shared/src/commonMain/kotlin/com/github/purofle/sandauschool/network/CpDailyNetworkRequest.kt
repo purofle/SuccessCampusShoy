@@ -18,7 +18,7 @@ object CpDailyNetworkRequest {
 
     val cpdailyInfo: String by lazy {
         val campusDailyInfo = CpdailyInfo(
-            deviceId = "26991875-B37A-4CB5-92E6-5228C89EE566",
+            deviceId = "60AD8B35-4803-477D-87C2-3BE746F1F4D8",
         )
 
         desEncrypt(

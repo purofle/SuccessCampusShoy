@@ -10,8 +10,3 @@ data class DynamicSecretKeyRequest(
     @SerialName("p") val private: String,
     @SerialName("s") val sign: String,
 )
-
-@Serializable
-data class StringDataOnlyResponse(
-    val data: String,
-)

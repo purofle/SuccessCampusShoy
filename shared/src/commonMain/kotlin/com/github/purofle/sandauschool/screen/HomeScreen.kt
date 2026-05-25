@@ -1,6 +1,6 @@
 package com.github.purofle.sandauschool.screen
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -19,6 +19,8 @@ import com.github.purofle.sandauschool.data.CAMPUSHOY_SECRET
 import com.github.purofle.sandauschool.data.CAMPUSHOY_SESSION_TOKEN
 import com.github.purofle.sandauschool.data.CAMPUSHOY_TGC
 import com.github.purofle.sandauschool.data.CampushoyLoginRequest
+import com.github.purofle.sandauschool.data.SignAttendanceRequest
+import com.github.purofle.sandauschool.data.TodayClassTable
 import com.github.purofle.sandauschool.data.get
 import com.github.purofle.sandauschool.data.set
 import com.github.purofle.sandauschool.network.CpDailyNetworkRequest
@@ -46,8 +48,12 @@ class HomeScreenViewModel() : ViewModel() {
 
     private val _dynamicKey = MutableStateFlow<String?>(null)
 
+    var classTableObject: List<TodayClassTable> = listOf()
+
     private val _classTable = MutableStateFlow<String>("")
     val classTable = _classTable.asStateFlow()
+
+    var campushoyLoginToken: String? = null
 
     fun getOrSetDynamicKey() {
         viewModelScope.launch {
@@ -131,13 +137,25 @@ class HomeScreenViewModel() : ViewModel() {
                 )
             )
 
-            val token =
+            campushoyLoginToken =
                 if (campushoyLoginRequest.code == 200 && !campushoyLoginRequest.token.isNullOrBlank()) {
                     campushoyLoginRequest.token
                 } else {
                     error("login failed: ${campushoyLoginRequest.msg}")
                 }
-            _classTable.value = SandauRequest.appApi.getTodayClassTable(token).body() ?: "暂无"
+            classTableObject = SandauRequest.appApi.getTodayClassTable(campushoyLoginToken).data
+            _classTable.value = classTableObject.toString()
+        }
+    }
+
+    fun signAttendance() {
+        viewModelScope.launch {
+            classTableObject.forEach {
+                SandauRequest.appApi.signAttendance(
+                    token = "Bearer $campushoyLoginToken",
+                    SignAttendanceRequest(it)
+                )
+            }
         }
     }
 }
@@ -150,48 +168,55 @@ fun HomeScreen(vm: HomeScreenViewModel = viewModel()) {
     val loginStatus: LoginStatus by vm.loginStatus.collectAsState()
     val classTable by vm.classTable.collectAsState()
 
-    Column {
+    LazyColumn {
+        item {
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text(stringResource(Res.string.input_student_id)) }
+            )
 
-        OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text(stringResource(Res.string.input_student_id)) }
-        )
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text(stringResource(Res.string.input_password)) }
+            )
 
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text(stringResource(Res.string.input_password)) }
-        )
+            OutlinedTextField(
+                value = smsVerificationCode,
+                onValueChange = { smsVerificationCode = it },
+                label = { Text("请输入刚收到的短信验证码") }
+            )
 
-        OutlinedTextField(
-            value = smsVerificationCode,
-            onValueChange = { smsVerificationCode = it },
-            label = { Text("请输入刚收到的短信验证码") }
-        )
+            Text(loginStatus.toString())
+            Text(classTable)
 
-        Text(loginStatus.toString())
-        Text(classTable)
-
-        Button({
-            vm.login(username, password)
-        }) {
-            Text("登录")
-        }
-
-        Button({
-            val status = loginStatus
-            if (status is LoginStatus.NeedMsgVerify) {
-                vm.sendSmsVerificationCode(status.phoneNumber)
+            Button({
+                vm.login(username, password)
+            }) {
+                Text("登录")
             }
-        }) {
-            Text("发送短信验证码")
-        }
 
-        Button({
-            vm.loginAttendanceSystem()
-        }) {
-            Text("考勤系统登录")
+            Button({
+                val status = loginStatus
+                if (status is LoginStatus.NeedMsgVerify) {
+                    vm.sendSmsVerificationCode(status.phoneNumber)
+                }
+            }) {
+                Text("发送短信验证码")
+            }
+
+            Button({
+                vm.loginAttendanceSystem()
+            }) {
+                Text("考勤系统登录")
+            }
+
+            Button({
+                vm.signAttendance()
+            }) {
+                Text("一键签到")
+            }
         }
     }
 }

@@ -92,6 +92,7 @@ class HomeScreenViewModel() : ViewModel() {
             LoginService.login(
                 username = username,
                 password = password,
+                // 学校的 API 不检查验证码真实性
                 captcha = if (needCaptcha) "aaaa" else "",
                 cpdailySecret = _dynamicKey.value!!,
             ).collect {

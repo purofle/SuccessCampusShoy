@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">杉达校园</string>
+    <string name="app_name">金日成校园</string>
     <string name="login">登录</string>
     <string name="input_student_id">请输入学号</string>
     <string name="input_password">请输入密码</string>

@@ -5,6 +5,7 @@ import de.jensklingenberg.ktorfit.Response
 import de.jensklingenberg.ktorfit.http.Field
 import de.jensklingenberg.ktorfit.http.FormUrlEncoded
 import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.Header
 import de.jensklingenberg.ktorfit.http.POST
 import de.jensklingenberg.ktorfit.http.Query
 
@@ -25,7 +26,15 @@ interface SandauAPI {
         @Field("dllt") dllt: String = "mobileLogin",
         @Field("execution") execution: String,
         @Field("lt") lt: String = "",
-        @Query("service") service: String = "http%3A%2F%2Fauthserver.sandau.edu.cn%2Fauthserver%2Fmobile%2Fcallback%3FappId%3D918460306565562368",
+        @Query("service") service: String = "http://authserver.sandau.edu.cn/authserver/mobile/callback?appId=918460306565562368",
+    ): Response<String>
+
+    @GET("authserver/login")
+    suspend fun loginWithCampus(
+        @Header("CpdailyInfo") cpdailyInfo: String,
+        @Header("Cookie") cookie: String,
+        @Query("service") service: String = "https://newehall.sandau.edu.cn/newmobile/client/userStoreAppList",
+        @Header("CpdailyClientType") cpdailyClientType: String = "CPDAILY",
     ): Response<String>
 
     @GET("authserver/checkNeedCaptcha.htl")

@@ -27,6 +27,7 @@ import com.github.purofle.sandauschool.network.CpDailyNetworkRequest
 import com.github.purofle.sandauschool.network.LoginService
 import com.github.purofle.sandauschool.network.LoginService.LoginStatus
 import com.github.purofle.sandauschool.network.SandauRequest
+import com.github.purofle.sandauschool.network.SandauRequest.courseManagementApi
 import com.github.purofle.sandauschool.res.Res
 import com.github.purofle.sandauschool.res.input_password
 import com.github.purofle.sandauschool.res.input_student_id
@@ -159,6 +160,13 @@ class HomeScreenViewModel() : ViewModel() {
             }
         }
     }
+
+    fun schoolSSOLogin() {
+        viewModelScope.launch {
+            val sessionToken = LoginService.getAndSetSchoolSessionToken()
+            println(courseManagementApi.casLogin(sessionToken))
+        }
+    }
 }
 
 @Composable
@@ -211,6 +219,12 @@ fun HomeScreen(vm: HomeScreenViewModel = viewModel()) {
                 vm.loginAttendanceSystem()
             }) {
                 Text("考勤系统登录")
+            }
+
+            Button({
+                vm.schoolSSOLogin()
+            }) {
+                Text("学校SSO")
             }
 
             Button({

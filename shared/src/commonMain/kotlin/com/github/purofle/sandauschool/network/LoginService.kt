@@ -3,14 +3,20 @@ package com.github.purofle.sandauschool.network
 import com.github.purofle.sandauschool.crypto.LZ4K
 import com.github.purofle.sandauschool.crypto.aesDecrypt
 import com.github.purofle.sandauschool.crypto.aesEncrypt
+import com.github.purofle.sandauschool.data.CAMPUSHOY_TGC
 import com.github.purofle.sandauschool.data.CpdailyLogin
 import com.github.purofle.sandauschool.data.CpdailyMessageCode
 import com.github.purofle.sandauschool.data.LoginData
 import com.github.purofle.sandauschool.data.NotCloudLoginRequest
+import com.github.purofle.sandauschool.data.SCHOOL_SESSION_TOKEN
+import com.github.purofle.sandauschool.data.get
+import com.github.purofle.sandauschool.data.set
+import com.github.purofle.sandauschool.network.CpDailyNetworkRequest.cpdailyInfo
 import com.github.purofle.sandauschool.network.SandauRequest.api
 import com.github.purofle.sandauschool.utils.StringUtils.toBase64
 import io.ktor.client.call.HttpClientCall
 import io.ktor.client.request.get
+import io.ktor.client.statement.request
 import io.ktor.http.decodeURLPart
 import io.ktor.utils.io.core.toByteArray
 import kotlinx.coroutines.Dispatchers
@@ -183,6 +189,20 @@ object LoginService {
                 ).toBase64()
             )
         )
+    }
+
+    suspend fun getAndSetSchoolSessionToken(): String {
+        val login = api.loginWithCampus(
+            cpdailyInfo = cpdailyInfo,
+            cookie = "AUTHTGC=${CAMPUSHOY_TGC.get()}; CASTGC=${CAMPUSHOY_TGC.get()}"
+        )
+        val cookie =
+            login.raw().request.headers["Cookie"] ?: error("Cannot find cookie in last request...")
+        val schoolSessionToken = cookie.substringAfter("MOD_AUTH_CAS=MOD_AUTH_")
+
+        SCHOOL_SESSION_TOKEN.set(schoolSessionToken)
+
+        return schoolSessionToken
     }
 }
 

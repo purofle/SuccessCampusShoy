@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.kotlin.serialization)
@@ -8,23 +8,14 @@ plugins {
     alias(libs.plugins.ktorfit)
 }
 
-android {
-    compileSdk = 36
-
-    defaultConfig {
-        minSdk = 26
-    }
-
-    namespace = "com.github.purofle.sandauschool"
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-
-    defaultConfig {
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-}
-
 kotlin {
-    androidTarget()
+    android {
+        compileSdk = 36
+        minSdk = 26
+
+        namespace = "com.github.purofle.sandauschool"
+        withJava()
+    }
 
     listOf(
         iosArm64(),

@@ -34,25 +34,25 @@ import com.github.purofle.sandauschool.res.input_student_id
 import io.ktor.client.statement.request
 import io.ktor.http.parseQueryString
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
-class HomeScreenViewModel() : ViewModel() {
+class HomeScreenViewModel : ViewModel() {
 
     init {
         getOrSetDynamicKey()
     }
 
-    private val _loginStatus = MutableStateFlow<LoginStatus>(LoginStatus.WaitForLogin)
-    val loginStatus = _loginStatus.asStateFlow()
+    val loginStatus: StateFlow<LoginStatus>
+        field = MutableStateFlow<LoginStatus>(LoginStatus.WaitForLogin)
 
     private val _dynamicKey = MutableStateFlow<String?>(null)
 
     var classTableObject: List<TodayClassTable> = listOf()
 
-    private val _classTable = MutableStateFlow<String>("")
-    val classTable = _classTable.asStateFlow()
+    val classTable: StateFlow<String>
+        field = MutableStateFlow<String>("")
 
     var campushoyLoginToken: String? = null
 
@@ -97,7 +97,7 @@ class HomeScreenViewModel() : ViewModel() {
                 captcha = if (needCaptcha) "aaaa" else "",
                 cpdailySecret = _dynamicKey.value!!,
             ).collect {
-                _loginStatus.value = it
+                loginStatus.value = it
 
                 when (it) {
                     is LoginStatus.LoginSuccess -> {
@@ -146,7 +146,7 @@ class HomeScreenViewModel() : ViewModel() {
                     error("login failed: ${campushoyLoginRequest.msg}")
                 }
             classTableObject = SandauRequest.appApi.getTodayClassTable(campushoyLoginToken).data
-            _classTable.value = classTableObject.toString()
+            classTable.value = classTableObject.toString()
         }
     }
 

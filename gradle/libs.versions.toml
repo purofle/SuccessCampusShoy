@@ -2,7 +2,7 @@
 agp = "9.2.1"
 kotlin = "2.4.0"
 coreKtx = "1.17.0"
-activityCompose = "1.11.0"
+activityCompose = "1.13.0"
 ktorfitVersion = "2.7.5"
 ktorfitConvertersResponse = "2.7.2"
 ktorVersion = "3.4.1"
@@ -25,7 +25,7 @@ org-jetbrains-kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", na
 de-jensklingenberg-ktorfit-ktorfit-lib = { group = "de.jensklingenberg.ktorfit", name = "ktorfit-lib", version.ref = "ktorfitVersion" }
 de-jensklingenberg-ktorfit-ktorfit-converters-response = { group = "de.jensklingenberg.ktorfit", name = "ktorfit-converters-response", version.ref = "ktorfitConvertersResponse" }
 
-compose-components-components = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "jetbrains-compose" }
+compose-components-resources = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "jetbrains-compose" }
 
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorVersion" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorVersion" }
@@ -42,3 +42,4 @@ kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref 
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 devtools-ksp = { id = "com.google.devtools.ksp", version = "2.3.6" }
 ktorfit = { id = "de.jensklingenberg.ktorfit", version.ref = "ktorfitVersion" }
+android-application = { id = "com.android.application", version.ref = "agp" }

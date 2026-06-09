@@ -1,12 +1,17 @@
 package com.github.purofle.sandauschool.data
 
+import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import com.github.purofle.sandauschool.MyApp
+
+private lateinit var appContext: Context
+
+fun setSharedContext(context: Context) {
+    appContext = context
+}
 
 actual fun createDataStore(): DataStore<Preferences> {
-    val context = MyApp.getContext()
     return createDataStore(
-        producePath = { context.filesDir.resolve(dataStoreFileName).absolutePath }
+        producePath = { appContext.filesDir.resolve(dataStoreFileName).absolutePath }
     )
 }

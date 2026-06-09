@@ -7,4 +7,5 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.devtools.ksp) apply false
     alias(libs.plugins.ktorfit) apply false
+    alias(libs.plugins.android.application) apply false
 }

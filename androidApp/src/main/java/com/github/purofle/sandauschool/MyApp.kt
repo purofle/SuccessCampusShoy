@@ -2,6 +2,7 @@ package com.github.purofle.sandauschool
 
 import android.app.Application
 import android.content.Context
+import com.github.purofle.sandauschool.data.setSharedContext
 
 class MyApp : Application() {
     companion object {
@@ -13,5 +14,6 @@ class MyApp : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        setSharedContext(this)
     }
 }

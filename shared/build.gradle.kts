@@ -13,8 +13,12 @@ kotlin {
         compileSdk = 36
         minSdk = 26
 
-        namespace = "com.github.purofle.sandauschool"
+        namespace = "com.github.purofle.sandauschool.shared"
         withJava()
+
+        withHostTest {}
+
+        androidResources.enable = true
     }
 
     listOf(
@@ -42,7 +46,7 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.compose.runtime)
             implementation(libs.compose.material3)
-            implementation(libs.compose.components.components)
+            implementation(libs.compose.components.resources)
             implementation(libs.jetbrains.lifecycle.viewmodelNavigation3)
             implementation(libs.jetbrains.navigation3.ui)
 

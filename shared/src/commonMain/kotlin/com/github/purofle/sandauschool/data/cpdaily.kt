@@ -6,13 +6,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CpdailyInfo(
     val deviceId: String,
-    val systemName: String = "iPadOS",
-    val appVersion: String = "9.9.7",
-    val model: String = "iPad8,6",
+    val systemName: String = "iOS",
+    val appVersion: String = "9.9.10",
+    val model: String = "iPhone SE(2nd)",
     val lon: Int = 0,
     val lat: Int = 0,
-    val cpdailyVersion: String = "9.9.7",
-    val systemVersion: String = "26.3",
+    val cpdailyVersion: String = "9.9.10",
+    val systemVersion: String = "18.7.8",
     val userId: String = "",
 )
 

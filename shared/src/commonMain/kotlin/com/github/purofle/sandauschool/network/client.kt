@@ -56,12 +56,13 @@ val myClient = HttpClient(CIO) {
             override fun log(message: String) {
                 println(message)
             }
-
         }
         level = LogLevel.ALL
     }
 
-    install(HttpCookies)
+    install(HttpCookies) {
+        storage = LocalCookiesStorage()
+    }
 
     install(SessionTokenPlugin)
 }

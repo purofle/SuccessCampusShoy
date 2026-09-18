@@ -33,6 +33,7 @@ kotlin {
 
     compilerOptions {
         freeCompilerArgs.add("-Xexplicit-backing-fields")
+        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 
     sourceSets {

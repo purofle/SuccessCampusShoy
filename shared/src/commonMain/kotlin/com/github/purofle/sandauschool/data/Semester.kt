@@ -1,4 +1,4 @@
-package com.github.purofle.sandauschool.model
+package com.github.purofle.sandauschool.data
 
 import kotlinx.serialization.Serializable
 

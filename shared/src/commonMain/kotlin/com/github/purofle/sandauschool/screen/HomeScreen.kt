@@ -253,6 +253,12 @@ fun HomeScreen(vm: HomeScreenViewModel = viewModel()) {
             }
 
             Button({
+
+            }) {
+                Text("同步课程表")
+            }
+
+            Button({
                 vm.signAttendance()
             }) {
                 Text("一键签到")

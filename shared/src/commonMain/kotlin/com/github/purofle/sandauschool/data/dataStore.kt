@@ -15,6 +15,8 @@ val CAMPUSHOY_SESSION_TOKEN = stringPreferencesKey("campushoy_session_token")
 val CAMPUSHOY_TGC = stringPreferencesKey("campushoy_tgc")
 val SCHOOL_SESSION_TOKEN = stringPreferencesKey("school_session_token")
 
+val COOKIES_STORAGE = stringPreferencesKey("cookies_storage")
+
 suspend fun <T> Preferences.Key<T>.get(): T? {
     return dataStore.data.map { it[this] }.first()
 }

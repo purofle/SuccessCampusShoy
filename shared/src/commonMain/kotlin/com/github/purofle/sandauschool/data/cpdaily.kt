@@ -60,7 +60,14 @@ data class MessageCodeData(
     val countdown: Int,
     val tipMsg: String,
     val status: Int,
-)
+) {
+    fun requireSent(): MessageCodeData {
+        require(status == 200) {
+            "Failed to send SMS code (status=$status): ${tipMsg.ifBlank { "No reason provided by server" }}"
+        }
+        return this
+    }
+}
 
 @Serializable
 data class AMPSession(

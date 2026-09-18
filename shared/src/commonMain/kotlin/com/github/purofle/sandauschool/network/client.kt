@@ -20,16 +20,20 @@ val json = Json {
     ignoreUnknownKeys = true
 }
 
-val myClient = HttpClient(CIO) {
+val cookieStorage = LocalCookiesStorage()
 
-    followRedirects = true
+val myClient = createHttpClient(true)
+internal val redirectClient = createHttpClient(false)
+
+private fun createHttpClient(redirects: Boolean) = HttpClient(CIO) {
+
+    followRedirects = redirects
 
     defaultRequest {
         headers {
             set("CpdailyClientType", "CPDAILY")
             set("CpdailyStandAlone", "0")
             set("CpdailyInfo", cpdailyInfo)
-            set("Content-Type", "application/json")
             set("tenantId", "sandau")
             set(
                 "User-Agent",
@@ -45,7 +49,7 @@ val myClient = HttpClient(CIO) {
         })
     }
 
-    install(HttpRedirect) {
+    if (redirects) install(HttpRedirect) {
         // 为什么会有学校 2026 年了还在用 http
         allowHttpsDowngrade = true
     }
@@ -61,7 +65,7 @@ val myClient = HttpClient(CIO) {
     }
 
     install(HttpCookies) {
-        storage = LocalCookiesStorage()
+        storage = cookieStorage
     }
 
     install(SessionTokenPlugin)

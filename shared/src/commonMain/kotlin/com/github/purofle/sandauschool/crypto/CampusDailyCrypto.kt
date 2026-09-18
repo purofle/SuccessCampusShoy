@@ -1,8 +1,10 @@
 package com.github.purofle.sandauschool.crypto
 
+import com.github.purofle.sandauschool.data.CAMPUSHOY_SECRET
 import com.github.purofle.sandauschool.data.DynamicSecretKeyRequest
 import com.github.purofle.sandauschool.data.SALT
 import com.github.purofle.sandauschool.data.ServiceSecret
+import com.github.purofle.sandauschool.data.get
 import com.github.purofle.sandauschool.network.CpDailyNetworkRequest
 import com.github.purofle.sandauschool.network.LOCAL_DIS_PASSWORD
 import com.github.purofle.sandauschool.utils.StringUtils.toBase64
@@ -31,7 +33,7 @@ object CampusDailyCrypto {
                 sign = sumMD5("$privateData&${SALT}".toByteArray()).toHexString(),
             )
         )
-        val parts = rsaDecrypt(Base64.decode(request.data), privateKey)
+        val parts = rsaDecrypt(Base64.decode(request.requireData()), privateKey)
             .decodeToString()
             .split("|")
 
@@ -42,9 +44,7 @@ object CampusDailyCrypto {
         )
     }
 
-    suspend fun getDynamicKeyFromLocal() {
-
-    }
+    suspend fun getDynamicKeyFromLocal() = CAMPUSHOY_SECRET.get()
 
     /**
      * Obfuscates the provided secret by interleaving its characters with a predefined password.

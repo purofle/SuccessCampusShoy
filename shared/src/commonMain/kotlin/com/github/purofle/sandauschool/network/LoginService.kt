@@ -3,22 +3,22 @@ package com.github.purofle.sandauschool.network
 import com.github.purofle.sandauschool.crypto.LZ4K
 import com.github.purofle.sandauschool.crypto.aesDecrypt
 import com.github.purofle.sandauschool.crypto.aesEncrypt
+import com.github.purofle.sandauschool.crypto.encryptDeviceVerificationMobile
 import com.github.purofle.sandauschool.data.CAMPUSHOY_TGC
 import com.github.purofle.sandauschool.data.CpdailyLogin
 import com.github.purofle.sandauschool.data.CpdailyMessageCode
 import com.github.purofle.sandauschool.data.LoginData
 import com.github.purofle.sandauschool.data.NotCloudLoginRequest
-import com.github.purofle.sandauschool.data.SCHOOL_SESSION_TOKEN
+import com.github.purofle.sandauschool.data.CAMPUSHOY_SESSION_TOKEN
+import com.github.purofle.sandauschool.data.dataStore
+import androidx.datastore.preferences.core.edit
 import com.github.purofle.sandauschool.data.ValidateMessageCode
-import com.github.purofle.sandauschool.data.get
-import com.github.purofle.sandauschool.data.set
-import com.github.purofle.sandauschool.network.CpDailyNetworkRequest.cpdailyInfo
 import com.github.purofle.sandauschool.network.SandauRequest.api
 import com.github.purofle.sandauschool.utils.StringUtils.toBase64
-import io.ktor.client.call.HttpClientCall
 import io.ktor.client.request.get
-import io.ktor.client.statement.request
-import io.ktor.http.decodeURLPart
+import io.ktor.http.*
+import io.ktor.client.request.forms.submitForm
+import io.ktor.client.statement.bodyAsText
 import io.ktor.utils.io.core.toByteArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -47,13 +47,12 @@ object LoginService {
      * @return Pair<Boolean, String> Boolean meaning if this string need decompress
      */
     private suspend fun getAuthServerHtml(): LoginStatus {
-        val getLoginPageRequest = api.getLoginPage()
-        val rawHtml =
-            getLoginPageRequest.body() ?: throw Exception("failed to get auth server html")
-
-        getMobileToken(getLoginPageRequest.raw().call)?.let {
-            return LoginStatus.GotMobileToken(it)
-        }
+        cookieStorage.addCookie(Url("https://mobile.campushoy.com/"), Cookie("tenantId", "sandau", path = "/", secure = true))
+        val initial = redirectClient.get("https://authserver.sandau.edu.cn/authserver/mobile/auth?appId=918460306565562368")
+        val (response, token) = followAuthRedirects(initial, "mobile_token", "authserver.sandau.edu.cn", "/authserver/mobile/default.html")
+        if (token != null) return LoginStatus.GotMobileToken(token)
+        require(response.status.value == 200) { "Failed to load the SSO login page" }
+        val rawHtml = response.bodyAsText()
 
         val result = "var o='(.*?)'"
             .toRegex()
@@ -93,14 +92,13 @@ object LoginService {
     fun login(
         username: String,
         password: String,
-        captcha: String = "",
         cpdailySecret: String
     ): Flow<LoginStatus> = flow {
 
         val mobileToken = when (val status = getAuthServerHtml()) {
             is LoginStatus.GotMobileToken -> status.mobileToken
-            else -> performSsoLogin(username, password, captcha, status)
-        }.decodeURLPart()
+            else -> performSsoLogin(username, password, status)
+        }
 
         emit(LoginStatus.GotMobileToken(mobileToken))
 
@@ -115,7 +113,7 @@ object LoginService {
         )
 
         val data = aesDecrypt(
-            Base64.decode(campusLoginRequest.data),
+            Base64.decode(campusLoginRequest.requireData()),
             cpdailySecret.toByteArray(),
             AES_IV,
         )
@@ -134,6 +132,7 @@ object LoginService {
             return@flow
         }
 
+        saveSession(loginData)
         emit(LoginStatus.LoginSuccess(loginData))
     }
         .flowOn(Dispatchers.IO)
@@ -144,7 +143,6 @@ object LoginService {
     private suspend fun performSsoLogin(
         username: String,
         password: String,
-        captcha: String,
         status: LoginStatus
     ): String {
         val html = when (status) {
@@ -162,58 +160,56 @@ object LoginService {
             iv = randomString(16).toByteArray(),
         )
 
-        val ssoLoginRequest = api.login(
-            username = username,
-            password = encryptedPassword.toBase64(),
-            execution = execution,
-            captcha = captcha,
+        // The school's endpoint reports a captcha requirement but does not
+        // validate the submitted captcha value. Keep the established flow.
+        val captcha = if (api.checkNeedCaptcha(username).isNeed) "aaaa" else ""
+        val response = redirectClient.submitForm(
+            url = "https://authserver.sandau.edu.cn/authserver/login?service=" +
+                "http://authserver.sandau.edu.cn/authserver/mobile/callback?appId=918460306565562368".encodeURLParameter(),
+            formParameters = parameters {
+                append("username", username)
+                append("password", encryptedPassword.toBase64())
+                append("execution", execution)
+                append("captcha", captcha)
+                append("_eventId", "submit")
+                append("cllt", "userNameLogin")
+                append("dllt", "mobileLogin")
+                append("lt", "")
+            },
         )
-
-        val call =
-            if (ssoLoginRequest.code == 302 && ssoLoginRequest.headers.contains("Location")) {
-                myClient.get(ssoLoginRequest.headers["Location"]!!).call
-        } else {
-                ssoLoginRequest.raw().call
-            }
-
-        return getMobileToken(call)?.decodeURLPart()
-            ?: error("Cannot get mobile token from url: ${call.request.url}")
+        return followAuthRedirects(response, "mobile_token", "authserver.sandau.edu.cn", "/authserver/mobile/default.html").second
+            ?: error("SSO login failed; check the username, password, or captcha")
     }
 
-    private fun getMobileToken(call: HttpClientCall): String? {
-        val callUrl = call.request.url.toString()
-        if (callUrl.contains("mobile_token")) {
-            val (_, mobileToken) = callUrl.split("mobile_token=")
-            return mobileToken
-        } else {
-            return null
+    suspend fun sendSmsVerificationCode(phone: String): Int {
+        require(phone.matches(Regex("[0-9]{11}"))) {
+            "The phone number returned by login is not an 11-digit number; log in again"
         }
-    }
-
-    suspend fun sendSmsVerificationCode(phone: String, cpdailySecret: String) {
-        CpDailyNetworkRequest.api.messageCode(
-            CpdailyMessageCode(
-                aesEncrypt(
-                    phone.toByteArray(),
-                    cpdailySecret.toByteArray(),
-                    AES_IV
-                ).toBase64()
-            )
+        val smsUrl = Url("https://mobile.campushoy.com/v6/auth/deviceChange/mobile/messageCode/v2")
+        require(cookieStorage.get(smsUrl).any { it.name == "deviceExceptionSessionToken" && it.value.isNotBlank() }) {
+            "The device verification session has expired; log in again before requesting an SMS code"
+        }
+        val response = CpDailyNetworkRequest.api.messageCode(
+            CpdailyMessageCode(encryptDeviceVerificationMobile(phone))
         )
+        require(response.errCode?.content == "0") {
+            "Failed to send SMS code (errCode=${response.errCode?.content ?: "missing"}): " +
+                (response.errMsg ?: "No reason provided by server")
+        }
+        return response.requireData().requireSent().countdown.coerceAtLeast(0)
     }
 
     /**
      * 提交短信验证码完成设备更换验证。
      * @param messageCode 用户收到的短信验证码，明文
      * @param mobileToken 即 mobile_token
-     * @param mobile notCloudLogin 返回的加密手机号，原样回传
-     * @return 解密后的登录数据，包含 sessionToken / tgc
+     * @param mobile notCloudLogin 返回的手机号，原样回传
+     * @return 登录数据，包含 sessionToken / tgc
      */
     suspend fun validateMessageCode(
         messageCode: String,
         mobileToken: String,
         mobile: String,
-        cpdailySecret: String,
     ): CpdailyLogin {
         val response = CpDailyNetworkRequest.api.validateMessageCode(
             ValidateMessageCode(
@@ -223,27 +219,26 @@ object LoginService {
             )
         )
 
-        val data = aesDecrypt(
-            Base64.decode(response.data),
-            cpdailySecret.toByteArray(),
-            AES_IV,
-        )
-
-        return json.decodeFromString(data.decodeToString())
+        val login = response.requireData()
+        saveSession(login)
+        return login
     }
 
-    suspend fun getAndSetSchoolSessionToken(): String {
-        val login = api.loginWithCampus(
-            cpdailyInfo = cpdailyInfo,
-            cookie = "AUTHTGC=${CAMPUSHOY_TGC.get()}; CASTGC=${CAMPUSHOY_TGC.get()}"
-        )
-        val cookie =
-            login.raw().request.headers["Cookie"] ?: error("Cannot find cookie in last request...")
-        val schoolSessionToken = cookie.substringAfter("MOD_AUTH_CAS=MOD_AUTH_")
-
-        SCHOOL_SESSION_TOKEN.set(schoolSessionToken)
-
-        return schoolSessionToken
+    private suspend fun saveSession(login: CpdailyLogin) {
+        require(login.deviceStatus != "exception" && login.sessionToken.isNotBlank() && login.tgc.isNotBlank()) {
+            "Login is incomplete; complete device verification again"
+        }
+        dataStore.edit {
+            it[CAMPUSHOY_SESSION_TOKEN] = login.sessionToken
+            it[CAMPUSHOY_TGC] = login.tgc
+        }
+        for (host in listOf("mobile.campushoy.com", "api.campushoy.com", "pullapp.campushoy.com")) {
+            val url = Url("https://$host/")
+            for ((name, value) in mapOf("sessionToken" to login.sessionToken, "tenantId" to "sandau",
+                "clientType" to "cpdaily_student", "standAlone" to "0")) {
+                cookieStorage.addCookie(url, Cookie(name, value, path = "/", secure = true))
+            }
+        }
     }
 }
 

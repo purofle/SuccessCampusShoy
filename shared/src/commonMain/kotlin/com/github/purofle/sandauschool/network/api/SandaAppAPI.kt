@@ -8,6 +8,7 @@ import com.github.purofle.sandauschool.data.TodayClassTable
 import de.jensklingenberg.ktorfit.http.Body
 import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.Header
+import de.jensklingenberg.ktorfit.http.Headers
 import de.jensklingenberg.ktorfit.http.POST
 import de.jensklingenberg.ktorfit.http.Query
 
@@ -17,6 +18,7 @@ interface SandaAppAPI {
         @Query("redirect") redirect: String = "/attendance/h5"
     ): DataWrapperResponse<AttendanceData>
 
+    @Headers("Content-Type: application/json")
     @POST("prod-api/attendance/auth/campushoy/callback")
     suspend fun oauth2Callback(
         @Body oauth2CallbackRequest: Oauth2CallbackRequest,

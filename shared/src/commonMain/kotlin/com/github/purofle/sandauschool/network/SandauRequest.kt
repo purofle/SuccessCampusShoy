@@ -15,7 +15,7 @@ object SandauRequest {
         .build()
 
     val sandaAppKtorfit = ktorfitBuilder
-        .baseUrl("http://sdapp.sandau.edu.cn:8669/")
+        .baseUrl("https://sdapp.sandau.edu.cn:8666/")
         .converterFactories(ResponseConverterFactory())
         .build()
 

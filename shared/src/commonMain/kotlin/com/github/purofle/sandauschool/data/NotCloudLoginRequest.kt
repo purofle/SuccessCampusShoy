@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * @param a a encrypted string with AES-CBC
+ * @param a an encrypted string with AES-CBC
  */
 @Serializable
 data class NotCloudLoginRequest(

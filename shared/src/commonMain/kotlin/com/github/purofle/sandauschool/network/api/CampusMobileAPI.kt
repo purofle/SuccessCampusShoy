@@ -4,6 +4,7 @@ import com.github.purofle.sandauschool.data.CpdailyMessageCode
 import com.github.purofle.sandauschool.data.DataWrapperResponse
 import com.github.purofle.sandauschool.data.DynamicSecretKeyRequest
 import com.github.purofle.sandauschool.data.NotCloudLoginRequest
+import com.github.purofle.sandauschool.data.ValidateMessageCode
 import de.jensklingenberg.ktorfit.http.Body
 import de.jensklingenberg.ktorfit.http.POST
 
@@ -21,5 +22,10 @@ interface CampusMobileAPI {
     @POST("v6/auth/deviceChange/mobile/messageCode/v2")
     suspend fun messageCode(
         @Body data: CpdailyMessageCode,
+    ): DataWrapperResponse<String>
+
+    @POST("v6/auth/deviceChange/validateMessageCode")
+    suspend fun validateMessageCode(
+        @Body data: ValidateMessageCode,
     ): DataWrapperResponse<String>
 }

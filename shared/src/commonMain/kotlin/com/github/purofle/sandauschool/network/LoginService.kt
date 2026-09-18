@@ -9,6 +9,7 @@ import com.github.purofle.sandauschool.data.CpdailyMessageCode
 import com.github.purofle.sandauschool.data.LoginData
 import com.github.purofle.sandauschool.data.NotCloudLoginRequest
 import com.github.purofle.sandauschool.data.SCHOOL_SESSION_TOKEN
+import com.github.purofle.sandauschool.data.ValidateMessageCode
 import com.github.purofle.sandauschool.data.get
 import com.github.purofle.sandauschool.data.set
 import com.github.purofle.sandauschool.network.CpDailyNetworkRequest.cpdailyInfo
@@ -34,7 +35,11 @@ object LoginService {
         data class GotAuthServerHtml(val html: String) : LoginStatus
         data class GotMobileToken(val mobileToken: String) : LoginStatus
         data class LoginSuccess(val cpdailyLogin: CpdailyLogin) : LoginStatus
-        data class NeedMsgVerify(val msg: String, val phoneNumber: String) : LoginStatus
+        data class NeedMsgVerify(
+            val msg: String,
+            val phoneNumber: String,
+            val mobileToken: String
+        ) : LoginStatus
         data class Error(val message: String?) : LoginStatus
     }
 
@@ -119,7 +124,13 @@ object LoginService {
             json.decodeFromString(data.decodeToString())
 
         if (loginData.deviceStatus == "exception") {
-            emit(LoginStatus.NeedMsgVerify(loginData.deviceExceptionMsg, loginData.mobile))
+            emit(
+                LoginStatus.NeedMsgVerify(
+                    loginData.deviceExceptionMsg,
+                    loginData.mobile,
+                    mobileToken
+                )
+            )
             return@flow
         }
 
@@ -189,6 +200,36 @@ object LoginService {
                 ).toBase64()
             )
         )
+    }
+
+    /**
+     * 提交短信验证码完成设备更换验证。
+     * @param messageCode 用户收到的短信验证码，明文
+     * @param mobileToken 即 mobile_token
+     * @param mobile notCloudLogin 返回的加密手机号，原样回传
+     * @return 解密后的登录数据，包含 sessionToken / tgc
+     */
+    suspend fun validateMessageCode(
+        messageCode: String,
+        mobileToken: String,
+        mobile: String,
+        cpdailySecret: String,
+    ): CpdailyLogin {
+        val response = CpDailyNetworkRequest.api.validateMessageCode(
+            ValidateMessageCode(
+                messageCode = messageCode,
+                ticket = mobileToken,
+                mobile = mobile,
+            )
+        )
+
+        val data = aesDecrypt(
+            Base64.decode(response.data),
+            cpdailySecret.toByteArray(),
+            AES_IV,
+        )
+
+        return json.decodeFromString(data.decodeToString())
     }
 
     suspend fun getAndSetSchoolSessionToken(): String {

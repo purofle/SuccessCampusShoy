@@ -7,9 +7,7 @@ import com.github.purofle.sandauschool.data.CAMPUSHOY_SESSION_TOKEN
 import com.github.purofle.sandauschool.data.CAMPUSHOY_TGC
 import com.github.purofle.sandauschool.data.CpdailyInfo
 import com.github.purofle.sandauschool.data.get
-import com.github.purofle.sandauschool.network.api.createCampusAPI
 import com.github.purofle.sandauschool.network.api.createCampusMobileAPI
-import com.github.purofle.sandauschool.network.api.createCampusSandauAPI
 import com.github.purofle.sandauschool.utils.StringUtils.toBase64
 import io.ktor.utils.io.core.toByteArray
 import kotlinx.coroutines.runBlocking
@@ -74,15 +72,5 @@ object CpDailyNetworkRequest {
         .baseUrl("https://mobile.campushoy.com/")
         .build()
 
-    val sandauCampushoyAPIKtorfit = ktorfitBuilder
-        .baseUrl("https://sandau.campusphere.net/")
-        .build()
-
-    val campushoyAPIKtorfit = ktorfitBuilder
-        .baseUrl("https://api.campushoy.com/")
-        .build()
-
     val api = ktorfit.createCampusMobileAPI()
-    val sandauCampusAPI = sandauCampushoyAPIKtorfit.createCampusSandauAPI()
-    val campusAPI = campushoyAPIKtorfit.createCampusAPI()
 }

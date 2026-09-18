@@ -38,6 +38,13 @@ data class CpdailyMessageCode(
     val mobile: String,
 )
 
+@Serializable
+data class ValidateMessageCode(
+    val messageCode: String,
+    val ticket: String,
+    val mobile: String,
+)
+
 /**
  * {"errCode":0,"errMsg":null,"data":{"countdown":60,"tipMsg":"","status":200}}
  */

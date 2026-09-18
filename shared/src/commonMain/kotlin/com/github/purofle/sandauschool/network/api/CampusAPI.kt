@@ -14,7 +14,7 @@ interface CampusAPI {
         @Header("Cookie") cookie: String,
         @Query("response_type") responseType: String = "code",
         @Query("client_id") clientId: String = "16814394990907003",
-        @Query("redirect_uri") redirectUri: String = "http://sdapp.sandau.edu.cn:8667/kq/#/",
+        @Query("redirect_uri") redirectUri: String = "http://sdapp.sandau.edu.cn:8666/attendance/oauth/",
         @Query("scope") scope: String = "get_user_info",
         @Query("state") state: String = "campushoy_oauth",
     ): Response<String>

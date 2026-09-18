@@ -1,5 +1,6 @@
 package com.github.purofle.sandauschool.screen
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
@@ -18,8 +19,7 @@ import com.github.purofle.sandauschool.crypto.CampusDailyCrypto.getCampushoySecr
 import com.github.purofle.sandauschool.data.CAMPUSHOY_SECRET
 import com.github.purofle.sandauschool.data.CAMPUSHOY_SESSION_TOKEN
 import com.github.purofle.sandauschool.data.CAMPUSHOY_TGC
-import com.github.purofle.sandauschool.data.CampushoyLoginRequest
-import com.github.purofle.sandauschool.data.SignAttendanceRequest
+import com.github.purofle.sandauschool.data.Oauth2CallbackRequest
 import com.github.purofle.sandauschool.data.TodayClassTable
 import com.github.purofle.sandauschool.data.get
 import com.github.purofle.sandauschool.data.set
@@ -31,8 +31,10 @@ import com.github.purofle.sandauschool.network.SandauRequest.courseManagementApi
 import com.github.purofle.sandauschool.res.Res
 import com.github.purofle.sandauschool.res.input_password
 import com.github.purofle.sandauschool.res.input_student_id
+import io.ktor.client.request.cookie
+import io.ktor.client.request.get
+import io.ktor.client.request.url
 import io.ktor.client.statement.request
-import io.ktor.http.parseQueryString
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -111,53 +113,66 @@ class HomeScreenViewModel : ViewModel() {
         }
     }
 
-    fun sendSmsVerificationCode(phone: String) {
+    fun sendSmsVerificationCode(phone: String) = viewModelScope.launch {
+        LoginService.sendSmsVerificationCode(
+            phone = phone,
+            cpdailySecret = _dynamicKey.value!!
+        )
+    }
+
+    fun validateMessageCode(code: String) {
+        val status = loginStatus.value as? LoginStatus.NeedMsgVerify ?: return
+
         viewModelScope.launch {
-            LoginService.sendSmsVerificationCode(
-                phone = phone,
-                cpdailySecret = _dynamicKey.value!!
-            )
+            runCatching {
+                LoginService.validateMessageCode(
+                    messageCode = code,
+                    mobileToken = status.mobileToken,
+                    mobile = status.phoneNumber,
+                    cpdailySecret = _dynamicKey.value!!,
+                )
+            }.onSuccess { login ->
+                CAMPUSHOY_SESSION_TOKEN.set(login.sessionToken)
+                CAMPUSHOY_TGC.set(login.tgc)
+                loginStatus.value = LoginStatus.LoginSuccess(login)
+            }.onFailure {
+                loginStatus.value = LoginStatus.Error(it.message)
+            }
         }
     }
 
-    fun loginAttendanceSystem() {
-        viewModelScope.launch {
-            val sessionToken = CAMPUSHOY_SESSION_TOKEN.get()
-            val oauth2 = CpDailyNetworkRequest.campusAPI.oauth2Authorize(
-                "clientType: cpdaily_student; sessionToken=${sessionToken}; standAlone=0; tenantId=sandau",
-            )
-            val code = oauth2.raw().request.url
-                .fragment
-                .substringAfter("?")
-                .let(::parseQueryString)["code"]
+    fun loginAttendanceSystem() = viewModelScope.launch {
+        val authorizeUrl = SandauRequest.appApi.authorize().data.authorizeUrl
+        val client = CpDailyNetworkRequest.ktorfit.httpClient
 
-            if (code.isNullOrBlank()) error("no code in oauth2 response: ${oauth2.body()}")
-
-            val campushoyLoginRequest = SandauRequest.appApi.campushoyLogin(
-                CampushoyLoginRequest(
-                    code = code
-                )
-            )
-
-            campushoyLoginToken =
-                if (campushoyLoginRequest.code == 200 && !campushoyLoginRequest.token.isNullOrBlank()) {
-                    campushoyLoginRequest.token
-                } else {
-                    error("login failed: ${campushoyLoginRequest.msg}")
-                }
-            classTableObject = SandauRequest.appApi.getTodayClassTable(campushoyLoginToken).data
-            classTable.value = classTableObject.toString()
+        val sessionToken = CAMPUSHOY_SESSION_TOKEN.get()
+        val oauth2 = client.get {
+            url(authorizeUrl)
+            cookie("clientType", "cpdaily_student")
+            cookie("sessionToken", sessionToken!!)
+            cookie("standAlone", "0")
+            cookie("tenantId", "sandau")
         }
+
+        val url = oauth2.request.url
+
+        val code = url.parameters["code"]!!
+        val state = url.parameters["state"]!!
+
+        val attendanceToken = SandauRequest.appApi.oauth2Callback(
+            Oauth2CallbackRequest(code, state)
+        ).data.token
+
+        classTableObject = SandauRequest.appApi.getTodayClassTable(
+            "Bearer $attendanceToken",
+            "Admin-Token=<JWT>",
+        ).data
+        classTable.value = "今日课表：$classTableObject"
     }
 
     fun signAttendance() {
         viewModelScope.launch {
-            classTableObject.forEach {
-                SandauRequest.appApi.signAttendance(
-                    token = "Bearer $campushoyLoginToken",
-                    SignAttendanceRequest(it)
-                )
-            }
+
         }
     }
 
@@ -191,11 +206,30 @@ fun HomeScreen(vm: HomeScreenViewModel = viewModel()) {
                 label = { Text(stringResource(Res.string.input_password)) }
             )
 
-            OutlinedTextField(
-                value = smsVerificationCode,
-                onValueChange = { smsVerificationCode = it },
-                label = { Text("请输入刚收到的短信验证码") }
-            )
+            val status = loginStatus
+            if (status is LoginStatus.NeedMsgVerify) {
+                Text(status.msg)
+
+                OutlinedTextField(
+                    value = smsVerificationCode,
+                    onValueChange = { smsVerificationCode = it },
+                    label = { Text("请输入刚收到的短信验证码") }
+                )
+
+                Row {
+                    Button({
+                        vm.sendSmsVerificationCode(status.phoneNumber)
+                    }) {
+                        Text("发送短信验证码")
+                    }
+
+                    Button({
+                        vm.validateMessageCode(smsVerificationCode)
+                    }) {
+                        Text("提交验证码")
+                    }
+                }
+            }
 
             Text(loginStatus.toString())
             Text(classTable)
@@ -204,15 +238,6 @@ fun HomeScreen(vm: HomeScreenViewModel = viewModel()) {
                 vm.login(username, password)
             }) {
                 Text("登录")
-            }
-
-            Button({
-                val status = loginStatus
-                if (status is LoginStatus.NeedMsgVerify) {
-                    vm.sendSmsVerificationCode(status.phoneNumber)
-                }
-            }) {
-                Text("发送短信验证码")
             }
 
             Button({

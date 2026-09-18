@@ -1,32 +1,30 @@
 package com.github.purofle.sandauschool.network.api
 
-import com.github.purofle.sandauschool.data.CampushoyLoginRequest
-import com.github.purofle.sandauschool.data.CampushoyLoginResponse
+import com.github.purofle.sandauschool.data.AttendanceData
 import com.github.purofle.sandauschool.data.DataWrapperResponse
-import com.github.purofle.sandauschool.data.SignAttendanceRequest
+import com.github.purofle.sandauschool.data.Oauth2CallbackRequest
+import com.github.purofle.sandauschool.data.Oauth2CallbackResponse
 import com.github.purofle.sandauschool.data.TodayClassTable
 import de.jensklingenberg.ktorfit.http.Body
 import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.Header
 import de.jensklingenberg.ktorfit.http.POST
+import de.jensklingenberg.ktorfit.http.Query
 
 interface SandaAppAPI {
-    @POST("campushoy_login")
-    suspend fun campushoyLogin(
-        @Body data: CampushoyLoginRequest,
-    ): CampushoyLoginResponse
+    @GET("prod-api/attendance/auth/campushoy/authorize")
+    suspend fun authorize(
+        @Query("redirect") redirect: String = "/attendance/h5"
+    ): DataWrapperResponse<AttendanceData>
 
-    /**
-     * @param token authorization token, need add `Bearer` prefix
-     */
-    @GET("kq/kqxx/get_kq_today_kcb")
+    @POST("prod-api/attendance/auth/campushoy/callback")
+    suspend fun oauth2Callback(
+        @Body oauth2CallbackRequest: Oauth2CallbackRequest,
+    ): DataWrapperResponse<Oauth2CallbackResponse>
+
+    @GET("prod-api/attendance/h5/student/schedule/today")
     suspend fun getTodayClassTable(
-        @Header("Authorization") token: String?,
+        @Header("Authorization") jwtToken: String,
+        @Header("Cookie") cookie: String,
     ): DataWrapperResponse<List<TodayClassTable>>
-
-    @POST("kq/kqxx/sign_kq")
-    suspend fun signAttendance(
-        @Header("Authorization") token: String?,
-        @Body data: SignAttendanceRequest,
-    )
 }
